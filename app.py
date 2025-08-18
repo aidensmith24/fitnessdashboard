@@ -21,7 +21,7 @@ def login_button_click():
         password = request.form['password']
 
         conn = get_db_connection()
-        
+
         if check_login(username, password) is None:
             return """invalid username and/or password <a href='/login'>login here</a>"""
         if check_login(username, password):
@@ -76,6 +76,14 @@ app.layout = html.Div(
     [
         dcc.Location(id="url"),
         dbc.NavbarSimple([ 
+            dbc.DropdownMenu(
+                    label="Calculators",
+                    nav=True,
+                    in_navbar=True,
+                    children=[
+                        dbc.DropdownMenuItem("BMR", href="/basal-metabolic-rate"),
+                    ],
+            ),
             dbc.NavItem(dbc.NavLink(id="user-status-header")),
         ],
             brand="FitSync",
