@@ -82,7 +82,8 @@ app.layout = html.Div(
                     in_navbar=True,
                     children=[
                         dbc.DropdownMenuItem("BMR", href="/basal-metabolic-rate"),
-                        dbc.DropdownMenuItem("BMI", href = '/bmi')
+                        dbc.DropdownMenuItem("BMI", href = '/bmi'),
+                        dbc.DropdownMenuItem("One Rep Max", href = '/one-rep-max')
                     ],
             ),
             dbc.NavItem(dbc.NavLink(id="user-status-header")),
