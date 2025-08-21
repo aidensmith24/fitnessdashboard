@@ -82,6 +82,7 @@ app.layout = html.Div(
                     in_navbar=True,
                     children=[
                         dbc.DropdownMenuItem("BMR", href="/basal-metabolic-rate"),
+                        dbc.DropdownMenuItem("BMI", href = '/bmi')
                     ],
             ),
             dbc.NavItem(dbc.NavLink(id="user-status-header")),

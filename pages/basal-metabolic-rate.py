@@ -17,7 +17,7 @@ layout = dbc.Container(
 
                         # Unit selector
                         dbc.RadioItems(
-                            id="units",
+                            id="bmr-units",
                             options=[
                                 {"label": "Metric", "value": "metric"},
                                 {"label": "Imperial", "value": "imperial"}
@@ -29,19 +29,50 @@ layout = dbc.Container(
 
                         # Age input
                         dbc.InputGroup(
-                            [dbc.InputGroupText("Age (years)"), dbc.Input(id="age", type="number", min=0)],
+                            [dbc.InputGroupText("Age (years)"), dbc.Input(id="bmr-age", type="number", min=0)],
                             className="mb-3"
                         ),
 
-                        # Height input (dynamic)
-                        html.Div(id="height-container", className="mb-3"),
+                        # Metric height input
+                        dbc.InputGroup(
+                            [dbc.InputGroupText("Height (cm)"), dbc.Input(id="bmr-height-cm", type="number", min=0)],
+                            id="bmr-height-metric-group",
+                            className="mb-3",
+                        ),
 
-                        # Weight input (dynamic)
-                        html.Div(id="weight-container", className="mb-3"),
+                        # Imperial height input (feet + inches)
+                        dbc.Row(
+                            [
+                                dbc.Col(dbc.InputGroup(
+                                    [dbc.InputGroupText("Feet"), dbc.Input(id="bmr-height-ft", type="number", min=0)],
+                                    className="mb-2"
+                                )),
+                                dbc.Col(dbc.InputGroup(
+                                    [dbc.InputGroupText("Inches"), dbc.Input(id="bmr-height-in", type="number", min=0)],
+                                    className="mb-2"
+                                )),
+                            ],
+                            id="bmr-height-imperial-group",
+                            className="mb-3",
+                        ),
+
+                        # Metric weight input
+                        dbc.InputGroup(
+                            [dbc.InputGroupText("Weight (kg)"), dbc.Input(id="bmr-weight-kg", type="number", min=0)],
+                            id="bmr-weight-metric-group",
+                            className="mb-3",
+                        ),
+
+                        # Imperial weight input
+                        dbc.InputGroup(
+                            [dbc.InputGroupText("Weight (lb)"), dbc.Input(id="bmr-weight-lb", type="number", min=0)],
+                            id="bmr-weight-imperial-group",
+                            className="mb-3",
+                        ),
 
                         # Gender
                         dbc.RadioItems(
-                            id="gender",
+                            id="bmr-gender",
                             options=[{"label": "Male", "value": "male"}, {"label": "Female", "value": "female"}],
                             value="male",
                             inline=True,
@@ -50,7 +81,7 @@ layout = dbc.Container(
 
                         # Activity level
                         dbc.Select(
-                            id="activity",
+                            id="bmr-activity",
                             options=[
                                 {"label": "Sedentary (little or no exercise)", "value": 1.2},
                                 {"label": "Lightly active (1-3 days/week)", "value": 1.375},
@@ -62,9 +93,9 @@ layout = dbc.Container(
                             className="mb-3",
                         ),
 
-                        dbc.Button("Calculate", id="calc-btn", color="primary", size="lg", className="w-100 mb-3"),
+                        dbc.Button("Calculate", id="bmr-calc-btn", color="primary", size="lg", className="w-100 mb-3"),
 
-                        html.Div(id="result", className="text-center fw-bold fs-4 text-primary"),
+                        html.Div(id="bmr-result", className="text-center fw-bold fs-4 text-primary"),
                     ],
                 )
             )
@@ -72,63 +103,45 @@ layout = dbc.Container(
     ]
 )
 
-# ------------------ DYNAMIC INPUTS BASED ON UNITS ------------------
+# ---------------- Show/hide inputs depending on unit ----------------
 @dash.callback(
-    Output("height-container", "children"),
-    Output("weight-container", "children"),
-    Input("units", "value")
+    Output("bmr-height-metric-group", "style"),
+    Output("bmr-weight-metric-group", "style"),
+    Output("bmr-height-imperial-group", "style"),
+    Output("bmr-weight-imperial-group", "style"),
+    Input("bmr-units", "value")
 )
-def update_inputs(units):
-    if units == "metric":
-        height_input = dbc.InputGroup(
-            [dbc.InputGroupText("Height (cm)"), dbc.Input(id="height", type="number", min=0)],
-        )
-        weight_input = dbc.InputGroup(
-            [dbc.InputGroupText("Weight (kg)"), dbc.Input(id="weight", type="number", min=0)],
-        )
-    else:  # imperial
-        height_input = dbc.Row(
-            [
-                dbc.Col(dbc.InputGroup(
-                    [dbc.InputGroupText("Feet"), dbc.Input(id="height-feet", type="number", min=0)],
-                    className="mb-2"
-                )),
-                dbc.Col(dbc.InputGroup(
-                    [dbc.InputGroupText("Inches"), dbc.Input(id="height-inches", type="number", min=0)],
-                    className="mb-2"
-                )),
-            ]
-        )
-        weight_input = dbc.InputGroup(
-            [dbc.InputGroupText("Weight (lbs)"), dbc.Input(id="weight", type="number", min=0)],
-        )
-    return height_input, weight_input
+def toggle_inputs(unit):
+    if unit == "metric":
+        return {}, {}, {"display": "none"}, {"display": "none"}
+    else:
+        return {"display": "none"}, {"display": "none"}, {}, {}
 
-# ------------------ BMR CALCULATION ------------------
+# ---------------- BMR calculation ----------------
 @dash.callback(
-    Output("result", "children"),
-    Input("calc-btn", "n_clicks"),
-    State("units", "value"),
-    State("gender", "value"),
-    State("age", "value"),
-    State("height", "value"),
-    State("height-feet", "value"),
-    State("height-inches", "value"),
-    State("weight", "value"),
-    State("activity", "value"),
+    Output("bmr-result", "children"),
+    Input("bmr-calc-btn", "n_clicks"),
+    State("bmr-units", "value"),
+    State("bmr-gender", "value"),
+    State("bmr-age", "value"),
+    State("bmr-height-cm", "value"),
+    State("bmr-height-ft", "value"),
+    State("bmr-height-in", "value"),
+    State("bmr-weight-kg", "value"),
+    State("bmr-weight-lb", "value"),
+    State("bmr-activity", "value"),
     prevent_initial_call=True
 )
-def calculate_bmr(n, units, gender, age, h_cm, h_feet, h_inches, weight, activity):
-    if not age or not weight or (units=="metric" and not h_cm) or (units=="imperial" and (not h_feet and not h_inches)):
+def calculate_bmr(n, units, gender, age, h_cm, h_ft, h_in, w_kg, w_lb, activity):
+    if not age or (units=="metric" and (not h_cm or not w_kg)) or (units=="imperial" and (not h_ft and not h_in or not w_lb)):
         return "⚠️ Please fill in all fields."
 
     # Convert height to cm if imperial
     if units == "imperial":
-        h_cm = (h_feet*12 + h_inches) * 2.54
+        h_cm = (h_ft*12 + h_in) * 2.54
 
     # Convert weight to kg if imperial
-    if units == "imperial":
-        weight = weight * 0.453592
+    weight = w_kg if units=="metric" else w_lb * 0.453592
 
     # BMR calculation
     if gender == "male":
