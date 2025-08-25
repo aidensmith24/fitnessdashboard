@@ -20,7 +20,6 @@ def login_button_click():
         username = request.form['username']
         password = request.form['password']
 
-        conn = get_db_connection()
 
         if check_login(username, password) is None:
             return """invalid username and/or password <a href='/login'>login here</a>"""
@@ -37,11 +36,15 @@ def login_button_click():
 
 def check_login(username, password):
     conn = get_db_connection()
-    user = conn.execute(
-        "SELECT * FROM users WHERE username = ? AND password = ?",
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM users WHERE username = %s AND password = %s",
         (username, password)
-    ).fetchone()
+    )
+    user = cur.fetchone()
+    conn.commit()
     conn.close()
+    
     return user
 
 app = dash.Dash(
