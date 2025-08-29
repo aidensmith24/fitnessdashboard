@@ -26,3 +26,4 @@ Werkzeug==3.1.3
 zipp==3.23.0
 psycopg2
 dotenv
+bcrypt
