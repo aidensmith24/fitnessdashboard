@@ -59,6 +59,18 @@ layout = dbc.Container(
 
                         # Output area (e.g., error message)
                         html.Div(id="output-state", className="text-danger text-center mt-2"),
+                        html.Div(
+                            [
+                                html.Span("Don't have an account? ", className="text-muted"),
+                                dcc.Link(
+                                    "Register here",
+                                    href="/registration",  # 👈 your registration route
+                                    className="fw-bold text-decoration-none",
+                                    style={"color": "#0d6efd"}  # Bootstrap primary blue
+                                ),
+                            ],
+                            className="text-center mt-3"
+                        )
                     ],
                 )
             ],

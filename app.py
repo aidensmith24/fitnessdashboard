@@ -8,6 +8,7 @@ from dash.exceptions import PreventUpdate
 from utils.login_handler import restricted_page
 import dash_bootstrap_components as dbc
 from utils.database_connection import get_db_connection
+import bcrypt
 
 import sqlite3
 
@@ -38,14 +39,17 @@ def check_login(username, password):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT * FROM users WHERE username = %s AND password = %s",
-        (username, password)
+        "SELECT username, password FROM users WHERE username = %s",
+        (username,)
     )
     user = cur.fetchone()
     conn.commit()
     conn.close()
-    
-    return user
+
+    if bcrypt.checkpw(password.encode("utf-8"), user[1].encode("utf-8")):
+        return user
+    else:
+        return None
 
 app = dash.Dash(
     __name__, server=server, use_pages=True, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP]
