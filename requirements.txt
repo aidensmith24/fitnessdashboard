@@ -27,3 +27,4 @@ zipp==3.23.0
 psycopg2
 dotenv
 bcrypt
+pandas
