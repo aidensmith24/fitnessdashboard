@@ -93,6 +93,14 @@ app.layout = html.Div(
                         dbc.DropdownMenuItem("One Rep Max", href = '/one-rep-max')
                     ],
             ),
+            dbc.DropdownMenu(
+                label = "Input",
+                nav = True,
+                in_navbar = True,
+                children = [
+                    dbc.DropdownMenuItem("Weight Input", href = "/weight-input")
+                ]
+            ),
             dbc.NavItem(dbc.NavLink(id="user-status-header")),
         ],
             brand="FitSync",
