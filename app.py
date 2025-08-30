@@ -99,7 +99,8 @@ app.layout = html.Div(
                 in_navbar = True,
                 children = [
                     dbc.DropdownMenuItem("Weight Input", href = "/weight-input"),
-                    dbc.DropdownMenuItem("Calorie Tracker", href = '/calorietracker')
+                    dbc.DropdownMenuItem("Calorie Tracker", href = '/calorietracker'),
+                    dbc.DropdownMenuItem("Macros Tracker", href = '/macros')
                 ]
             ),
             dbc.NavItem(dbc.NavLink(id="user-status-header")),
