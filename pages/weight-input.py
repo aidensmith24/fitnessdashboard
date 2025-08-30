@@ -9,6 +9,8 @@ import psycopg2
 from flask_login import current_user
 from utils.database_connection import get_db_connection
 from utils.login_handler import require_login
+from dash import ctx
+import plotly.graph_objects as go
 
 dash.register_page(__name__)
 require_login(__name__)
@@ -63,166 +65,217 @@ def serve_layout():
         ])
     else:
         return dbc.Container(
-            fluid=True,
-            className="p-4",
-            children=[
-                dbc.Row(
-                    [
-                        # Manual entry
-                        dbc.Col(
-                            dbc.Card(
-                                className="shadow p-4 mb-4",
-                                children=[
-                                    html.H4("Add Weight", className="fw-bold mb-3"),
-                                    dbc.InputGroup(
-                                        [
-                                            dbc.InputGroupText("⚖️"),
-                                            dbc.Input(
-                                                id="weight-input",
-                                                type="number",
-                                                placeholder="Enter weight",
-                                            ),
-                                            dbc.Select(
-                                                id="unit-select",
-                                                options=[
-                                                    {"label": "kg", "value": "kg"},
-                                                    {"label": "lbs", "value": "lbs"},
-                                                ],
-                                                value="kg",
-                                                style={"maxWidth": "80px"},
-                                            ),
-                                        ],
-                                        className="mb-3",
-                                    ),
-                                    dbc.Button(
-                                        "Add Weight",
-                                        id="add-weight-btn",
-                                        color="primary",
-                                        className="w-100",
-                                        n_clicks=0,
-                                    ),
-                                    html.Div(id="weight-output", className="text-center mt-3"),
-                                ],
-                            ),
-                            md=6,
-                        ),
-
-                        # Bulk upload
-                        dbc.Col(
-                            dbc.Card(
-                                className="shadow p-4 mb-4",
-                                children=[
-                                    html.H4("Upload Bulk Weights", className="fw-bold mb-3"),
-                                    dcc.Upload(
-                                        id="upload-data",
-                                        children=html.Div(
-                                            ["📂 Drag and Drop or ", html.A("Select a File")]
-                                        ),
-                                        style={
-                                            "width": "100%",
-                                            "height": "100px",
-                                            "lineHeight": "100px",
-                                            "borderWidth": "2px",
-                                            "borderStyle": "dashed",
-                                            "borderRadius": "15px",
-                                            "textAlign": "center",
-                                            "cursor": "pointer",
-                                            "backgroundColor": "#f8f9fa",
-                                        },
-                                        multiple=False,
-                                    ),
-                                    html.Div(id="upload-output", className="mt-3"),
-                                ],
-                            ),
-                            md=6,
-                        ),
-                    ]
-                ),
-
-                # Weight history table
-                dbc.Row(
-                    dbc.Col(
-                        dbc.Card(
-                            className="shadow p-4",
-                            children=[
-                                html.H4("Weight History", className="fw-bold mb-3"),
-                                dash_table.DataTable(
-                                    id="weight-table",
-                                    columns=[
-                                        {"name": "Date", "id": "Date"},
-                                        {"name": "Weight (kg)", "id": "Weight"},
-                                    ],
-                                    data=get_user_weights(),
-                                    style_table={"overflowX": "auto"},
-                                    style_cell={"textAlign": "center"},
-                                    page_size=10,
+                fluid=True,
+                className="p-3",
+                children=[
+                    dbc.Card(
+                        className="shadow-sm p-3 mb-4",
+                        children=[
+                            html.H3("Add Weight", className="mb-3 text-center fw-bold"),
+                            dbc.Row([
+                                dbc.Col(
+                                    dbc.InputGroup([
+                                        dbc.InputGroupText("⚖️"),
+                                        dbc.Input(id="weight-input", type="number", placeholder="Enter weight"),
+                                    ]),
+                                    xs=12, md=6, className="mb-2"
                                 ),
-                            ],
-                        ),
-                        width=12,
-                    )
-                ),
-            ],
-        )
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        id="unit-select",
+                                        options=[
+                                            {"label": "Kilograms (kg)", "value": "kg"},
+                                            {"label": "Pounds (lbs)", "value": "lbs"}
+                                        ],
+                                        value="kg",
+                                        clearable=False,
+                                    ),
+                                    xs=12, md=4, className="mb-2"
+                                ),
+                                dbc.Col(
+                                    dbc.Button("Add", id="add-weight-btn", color="primary", className="w-100"),
+                                    xs=12, md=2, className="mb-2"
+                                ),
+                            ]),
+                            html.Div(id="weight-output", className="text-success text-center mt-2"),
+                        ]
+                    ),
+
+                    dbc.Card(
+                        className="shadow-sm p-3 mb-4",
+                        children=[
+                            html.H3("Bulk Upload", className="mb-3 text-center fw-bold"),
+                            dcc.Upload(
+                                id="upload-data",
+                                children=html.Div(["📤 Drag & Drop or ", html.A("Select Files")]),
+                                style={
+                                    "width": "100%", "height": "80px",
+                                    "lineHeight": "80px", "borderWidth": "1px",
+                                    "borderStyle": "dashed", "borderRadius": "12px",
+                                    "textAlign": "center",
+                                },
+                                multiple=False
+                            ),
+                            html.Div(id="upload-output", className="text-info text-center mt-2"),
+                        ]
+                    ),
+
+                    dbc.Card(
+                        className="shadow-sm p-3 mb-4",
+                        children=[
+                            html.H3("Weight History", className="mb-3 text-center fw-bold"),
+                            dcc.Dropdown(
+                                id="history-unit-select",
+                                options=[
+                                    {"label": "Kilograms (kg)", "value": "kg"},
+                                    {"label": "Pounds (lbs)", "value": "lbs"}
+                                ],
+                                value="kg",
+                                clearable=False,
+                                className="mb-3"
+                            ),
+                            dbc.RadioItems(
+                                id="graph-view-mode",
+                                options=[
+                                    {"label": "Daily Average", "value": "avg"},
+                                    {"label": "All Entries", "value": "all"}
+                                ],
+                                value="avg",
+                                inline=True,
+                                className="mb-3"
+                            ),
+                            dcc.Graph(
+                                id="weight-graph",
+                                config={"displayModeBar": False},
+                                style={"height": "300px", "width": "100%"},
+                            ),
+                            dash_table.DataTable(
+                                id="weight-table",
+                                columns=[
+                                    {"name": "Date", "id": "Date"},
+                                    {"name": "Weight", "id": "Weight"},
+                                ],
+                                style_table={"overflowX": "auto"},
+                                style_cell={
+                                    "textAlign": "center",
+                                    "padding": "8px",
+                                    "minWidth": "80px",
+                                    "whiteSpace": "normal"
+                                },
+                            ),
+                        ]
+                    ),
+                ]
+            )
 
 
-# --- Callbacks ---
+def convert_weights(weights, unit):
+    """Convert weight list from kg to preferred unit for display."""
+    converted = []
+    for w in weights:
+        if unit == "lbs":
+            converted.append({
+                "Date": w["Date"],
+                "Weight": round(w["Weight"] * 2.20462, 2)
+            })
+        else:
+            converted.append({
+                "Date": w["Date"],
+                "Weight": round(w["Weight"], 2)
+            })
+    return converted
+
 
 @dash.callback(
     Output("weight-output", "children"),
-    Output("weight-table", "data", allow_duplicate=True),
+    Output("upload-output", "children"),
+    Output("weight-table", "data"),
+    Output("weight-graph", "figure"),
     Input("add-weight-btn", "n_clicks"),
     State("weight-input", "value"),
     State("unit-select", "value"),
-    prevent_initial_call=True,
-)
-def add_weight_callback(n_clicks, weight, unit):
-    if not weight:
-        return "⚠️ Please enter a weight.", get_user_weights()
-    if unit == "lbs":
-        weight = round(weight * 0.453592, 2)
-    success, msg = add_weight_to_db(weight)
-    return msg, get_user_weights()
-
-
-@dash.callback(
-    Output("upload-output", "children"),
-    Output("weight-table", "data"),
     Input("upload-data", "contents"),
     State("upload-data", "filename"),
-    prevent_initial_call=True,
-)
-def upload_file_callback(contents, filename):
-    if contents is None:
-        return "⚠️ No file uploaded.", get_user_weights()
+    Input("history-unit-select", "value"),
+    Input("graph-view-mode", "value")
+    )
+def update_page(n_clicks, weight, unit, uploaded_contents, filename, display_unit, view_mode):
+    msg = ""
+    upload_msg = ""
 
-    content_type, content_string = contents.split(",")
-    decoded = base64.b64decode(content_string)
+    # Add weight manually
+    if n_clicks and weight:
+        save_weight(1, weight, unit)  # hardcoded user_id=1
+        msg = "✅ Weight added!"
 
-    try:
-        if filename.endswith(".csv"):
-            df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
-        elif filename.endswith((".xls", ".xlsx")):
-            df = pd.read_excel(io.BytesIO(decoded))
+    # Handle bulk upload
+    if uploaded_contents:
+        content_type, content_string = uploaded_contents.split(",")
+        decoded = base64.b64decode(content_string)
+        try:
+            if filename.endswith(".csv"):
+                df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+            else:
+                df = pd.read_excel(io.BytesIO(decoded))
+
+            for _, row in df.iterrows():
+                save_weight(1, row["Weight"], row.get("Unit", "kg"))
+            upload_msg = "✅ Bulk upload successful!"
+        except Exception as e:
+            upload_msg = f"❌ Upload failed: {e}"
+
+    # Get all weights from DB
+    data = convert_weights(get_user_weights(), display_unit)
+    data = sorted(data, key=lambda row: row["Date"])
+
+    # Build graph
+    fig = go.Figure()
+    if data:
+        if view_mode == "avg":
+            df = pd.DataFrame(data)
+            # Ensure datetime
+            df["Date"] = pd.to_datetime(df['Date']).dt.date
+            # Strip time, group by day
+            daily_avg = df.groupby('Date').mean().reset_index()
+            # Convert dates to strings for categorical x-axis
+            daily_avg["Date"] = daily_avg["Date"].astype(str)
+
+            fig.add_trace(
+                go.Scatter(
+                    x=daily_avg["Date"],
+                    y=daily_avg["Weight"],
+                    mode="lines+markers",
+                    line=dict(shape="spline", smoothing=1.3, width=3),
+                    marker=dict(size=6)
+                )
+            )
+            fig.update_layout(
+                xaxis_type='category',
+                xaxis_title="Date",
+                yaxis_title=f"Weight ({display_unit})",
+                margin=dict(l=20, r=20, t=30, b=20),
+                template="simple_white"
+            )
+
         else:
-            return "❌ Unsupported file format.", get_user_weights()
+            fig.add_trace(
+                go.Scatter(
+                    x=[row["Date"] for row in data],
+                    y=[row["Weight"] for row in data],
+                    mode="lines+markers",
+                    line=dict(shape="spline", smoothing=1.3, width=3),
+                    marker=dict(size=6)
+                )
+            )
 
-        if "Weight" not in df.columns:
-            return "⚠️ File must have a 'Weight' column.", get_user_weights()
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
+            xaxis_title="Date",
+            yaxis_title=f"Weight ({display_unit})",
+            template="simple_white",
+        )
 
-        count = 0
-        for i, row in df.iterrows():
-            weight = row["Weight"]
-            unit = str(row["Unit"]).lower() if "Unit" in df.columns else "kg"
-            if unit == "lbs":
-                weight = round(weight * 0.453592, 2)
-            success, _ = add_weight_to_db(weight)
-            if success:
-                count += 1
+    return msg, upload_msg, data, fig
 
-        return f"✅ Successfully uploaded {count} records!", get_user_weights()
-
-    except Exception as e:
-        return f"❌ Error processing file: {e}", get_user_weights()
 
 layout = serve_layout
