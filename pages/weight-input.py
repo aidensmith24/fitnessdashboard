@@ -185,6 +185,9 @@ def convert_weights(weights, unit):
             })
     return converted
 
+def convert_to_kg(weight):
+    return round(weight / 2.20462, 2)
+
 
 @dash.callback(
     Output("weight-output", "children"),
@@ -205,7 +208,9 @@ def update_page(n_clicks, weight, unit, uploaded_contents, filename, display_uni
 
     # Add weight manually
     if n_clicks and weight:
-        save_weight(1, weight, unit)  # hardcoded user_id=1
+        if unit == 'lbs':
+            weight = convert_to_kg(weight)
+        add_weight_to_db(weight)  # hardcoded user_id=1
         msg = "✅ Weight added!"
 
     # Handle bulk upload
@@ -219,7 +224,7 @@ def update_page(n_clicks, weight, unit, uploaded_contents, filename, display_uni
                 df = pd.read_excel(io.BytesIO(decoded))
 
             for _, row in df.iterrows():
-                save_weight(1, row["Weight"], row.get("Unit", "kg"))
+                add_weight_to_db(row.get("Unit", "kg"))
             upload_msg = "✅ Bulk upload successful!"
         except Exception as e:
             upload_msg = f"❌ Upload failed: {e}"

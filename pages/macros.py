@@ -111,8 +111,7 @@ def serve_layout():
                         {"name": "Meal", "id": "Meal"},
                         {"name": "Protein (g)", "id": "Protein"},
                         {"name": "Carbs (g)", "id": "Carbs"},
-                        {"name": "Fat (g)", "id": "Fat"},
-                        {"name": "Calories", "id": "Calories"},
+                        {"name": "Fat (g)", "id": "Fat"}
                     ],
                     style_table={"overflowX": "auto"},
                     style_cell={"textAlign": "center", "minWidth": "80px"},
@@ -197,6 +196,13 @@ def update_macros(n_clicks, selected_date, meal, protein, carbs, fat, modal_open
         title="Daily Macros Over Time"
     )
     line_chart.update_layout(yaxis_title="Grams")
+    line_chart.update_layout(
+        xaxis=dict(
+            tickformat="%Y-%m-%d",  # show only date
+            dtick="D1"               # one day between ticks
+        )
+    )
+
 
     return msg, df.to_dict("records"), pie_chart, line_chart, False
 
