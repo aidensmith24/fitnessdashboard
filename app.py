@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, redirect, session
+from flask import Flask, request, redirect, session, url_for
 from flask_login import login_user, LoginManager, UserMixin, logout_user, current_user
 
 import dash
@@ -15,15 +15,16 @@ import sqlite3
 # Exposing the Flask Server to enable configuring it for logging in
 server = Flask(__name__)
 
+key = os.getenv("DATABASE")
+
 @server.route('/login', methods=['POST'])
-def login_button_click():
+def login():
     if request.form:
         username = request.form['username']
         password = request.form['password']
 
-
         if check_login(username, password) is None:
-            return """invalid username and/or password <a href='/login'>login here</a>"""
+            return redirect(url_for("login") + "?error=1")
         if check_login(username, password):
             login_user(User(username))
             if 'url' in session:
@@ -32,7 +33,7 @@ def login_button_click():
                     session['url'] = None
                     return redirect(url) ## redirect to target url
             return redirect('/') ## redirect to home
-        return """invalid username and/or password <a href='/login'>login here</a>"""
+        return redirect(url_for("login") + "?error=1")
 
 
 def check_login(username, password):
@@ -43,6 +44,8 @@ def check_login(username, password):
         (username,)
     )
     user = cur.fetchone()
+    if not user:
+        return None
     conn.commit()
     conn.close()
 
@@ -56,7 +59,7 @@ app = dash.Dash(
 )
 
 # Updating the Flask Server configuration with Secret Key to encrypt the user session cookie
-server.config.update(SECRET_KEY="igjiogjreigjre")
+server.config.update(SECRET_KEY = key)
 
 # Login manager object will be used to login / logout users
 login_manager = LoginManager()
