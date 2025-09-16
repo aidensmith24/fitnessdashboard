@@ -87,7 +87,7 @@ def layout(**kwargs):
                                     html.Span("Forgotten password?", className="text-muted"),
                                     dcc.Link(
                                         "Click Here",
-                                        href="/reset_password",
+                                        href="/forgot-password",
                                         className="fw-bold text-decoration-none",
                                         style={"color": "#0d6efd"}
                                     ),
