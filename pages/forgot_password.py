@@ -1,17 +1,58 @@
 import dash
 from dash import html, dcc, Input, Output, State
+import dash_bootstrap_components as dbc
 from utils.database_connection import create_reset_token
 from utils.emailer import send_reset_email
 import psycopg2
 
 dash.register_page(__name__, path="/forgot-password")
 
-layout = html.Div([
-    html.H2("Forgot Password"),
-    dcc.Input(id="reset-email", type="email", placeholder="Enter your email"),
-    html.Button("Send reset link", id="send-reset-btn"),
-    html.Div(id="reset-msg", className="mt-2")
-])
+layout = dbc.Container(
+    fluid=True,
+    children=[
+        dbc.Row(
+            dbc.Col(
+                dbc.Card(
+                    className="shadow-lg p-4",
+                    style={"maxWidth": "500px", "margin": "80px auto", "borderRadius": "20px"},
+                    children=[
+                        html.H2("Forgot Password", className="text-center mb-4 fw-bold"),
+
+                        html.P(
+                            "Enter your email address below and we’ll send you a link to reset your password.",
+                            className="text-center text-muted mb-4"
+                        ),
+
+                        dbc.InputGroup(
+                            [
+                                dbc.InputGroupText("📧"),
+                                dbc.Input(
+                                    id="reset-email",
+                                    type="email",
+                                    placeholder="Enter your email",
+                                    required=True,
+                                ),
+                            ],
+                            className="mb-3"
+                        ),
+
+                        dbc.Button(
+                            "Send Reset Link",
+                            id="send-reset-btn",
+                            color="primary",
+                            size="lg",
+                            className="w-100 mb-3"
+                        ),
+
+                        html.Div(id="reset-msg", className="text-center text-success fw-bold mt-2"),
+                    ],
+                ),
+                width=12,
+                lg=6,
+            ), className = "d-flex justify-content-center align-items-center"
+        )
+    ]
+)
 
 @dash.callback(
     Output("reset-msg", "children"),

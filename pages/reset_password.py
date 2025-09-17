@@ -5,14 +5,65 @@ from utils.database_connection import verify_token, update_password
 dash.register_page(__name__, path_template="/reset-password/<token>")
 
 def layout(token=None, **kwargs):
-    return html.Div([
-        html.H2("Reset Your Password"),
-        dcc.Input(id="new-pass1", type="password", placeholder="New password"),
-        dcc.Input(id="new-pass2", type="password", placeholder="Confirm password"),
-        html.Button("Reset Password", id="do-reset-btn"),
-        html.Div(id="reset-done", className="mt-2"),
-        dcc.Store(id="reset-token", data=token)
-    ])
+    return dbc.Container(
+        fluid=True,
+        style={"height": "100vh"},  # full screen height
+        children=[
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        className="shadow-lg p-4",
+                        style={"maxWidth": "500px", "borderRadius": "20px"},
+                        children=[
+                            html.H2("Reset Your Password", className="text-center mb-4 fw-bold"),
+
+                            dbc.InputGroup(
+                                [
+                                    dbc.InputGroupText("🔒"),
+                                    dbc.Input(
+                                        id="new-pass1",
+                                        type="password",
+                                        placeholder="Enter new password",
+                                        required=True,
+                                    ),
+                                ],
+                                className="mb-3"
+                            ),
+
+                            dbc.InputGroup(
+                                [
+                                    dbc.InputGroupText("🔒"),
+                                    dbc.Input(
+                                        id="new-pass2",
+                                        type="password",
+                                        placeholder="Confirm new password",
+                                        required=True,
+                                    ),
+                                ],
+                                className="mb-3"
+                            ),
+
+                            dbc.Button(
+                                "Reset Password",
+                                id="do-reset-btn",
+                                color="primary",
+                                size="lg",
+                                className="w-100 mb-3"
+                            ),
+
+                            html.Div(id="reset-done", className="text-center fw-bold mt-2"),
+
+                            dcc.Store(id="reset-token", data=token),  # hidden token store
+                        ],
+                    ),
+                    width=12,
+                    lg=6,
+                ),
+                className="d-flex justify-content-center align-items-center",
+                style={"height": "100vh"},
+            )
+        ]
+    )
 
 @dash.callback(
     Output("reset-done", "children"),
